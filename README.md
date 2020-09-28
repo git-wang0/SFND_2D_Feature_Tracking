@@ -4,10 +4,12 @@
 
 ## Results
 detectorType_list = {"SHITOMASI", "SIFT", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE"}
+
 descriptorType_list = {"BRISK", "FREAK", "BRIEF", "AKAZE", "SIFT", "ORB"}
 
 ### MP.1 Ring Buffer
 This is achieved by removing element in the beginning and pushing a new element. Code below:
+
                     if(dataBuffer.size()>=2)
                         dataBuffer.erase(dataBuffer.begin());
 
@@ -16,6 +18,7 @@ This is achieved by removing element in the beginning and pushing a new element.
 
 ### MP.2 Keypoint Detection
 Implement different detectors.
+
                     if (detectorType.compare("SHITOMASI") == 0)
                     {
                         detKeypointsShiTomasi(keypoints, imgGray, false);
@@ -31,6 +34,7 @@ Implement different detectors.
 
 ### MP.3 Keypoint Removal
 Remove keypoints outside of a pre-defined rectangle.
+
                     if (bFocusOnVehicle)
                     {
                         vector<cv::KeyPoint> filteredKeypoints;
