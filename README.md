@@ -2,14 +2,57 @@
 
 <img src="images/keypoints.png" width="820" height="248" />
 
-The idea of the camera course is to build a collision detection system - that's the overall goal for the Final Project. As a preparation for this, you will now build the feature tracking part and test various detector / descriptor combinations to see which ones perform best. This mid-term project consists of four parts:
+## Results
+detectorType_list = {"SHITOMASI", "SIFT", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE"}
+descriptorType_list = {"BRISK", "FREAK", "BRIEF", "AKAZE", "SIFT", "ORB"}
 
-* First, you will focus on loading images, setting up data structures and putting everything into a ring buffer to optimize memory load. 
-* Then, you will integrate several keypoint detectors such as HARRIS, FAST, BRISK and SIFT and compare them with regard to number of keypoints and speed. 
-* In the next part, you will then focus on descriptor extraction and matching using brute force and also the FLANN approach we discussed in the previous lesson. 
-* In the last part, once the code framework is complete, you will test the various algorithms in different combinations and compare them with regard to some performance measures. 
+### MP.1 Ring Buffer
+This is achieved by removing element in the beginning and pushing a new element. Code below:
+                    if(dataBuffer.size()>=2)
+                        dataBuffer.erase(dataBuffer.begin());
 
-See the classroom instruction and code comments for more details on each of these parts. Once you are finished with this project, the keypoint matching part will be set up and you can proceed to the next lesson, where the focus is on integrating Lidar points and on object detection using deep-learning. 
+                    dataBuffer.push_back(frame);
+
+
+### MP.2 Keypoint Detection
+Implement different detectors.
+                    if (detectorType.compare("SHITOMASI") == 0)
+                    {
+                        detKeypointsShiTomasi(keypoints, imgGray, false);
+                    }
+                    else if (detectorType.compare("HARRIS") == 0)
+                    {
+                        detKeypointsHarris(keypoints, imgGray, false);
+                    }
+                    else
+                    {
+                        detKeypointsModern(keypoints, imgGray, detectorType, false);
+                    }
+
+### MP.3 Keypoint Removal
+Remove keypoints outside of a pre-defined rectangle.
+                    if (bFocusOnVehicle)
+                    {
+                        vector<cv::KeyPoint> filteredKeypoints;
+                        for (auto kp : keypoints) {
+                            if (vehicleRect.contains(kp.pt)) filteredKeypoints.push_back(kp);
+                        }
+                        keypoints = filteredKeypoints;
+                    }
+
+### MP.2 Keypoint Detection
+
+### MP.2 Keypoint Detection
+
+### MP.2 Keypoint Detection
+
+### MP.2 Keypoint Detection
+
+### MP.2 Keypoint Detection
+
+### MP.2 Keypoint Detection
+
+
 
 ## Dependencies for Running Locally
 * cmake >= 2.8
