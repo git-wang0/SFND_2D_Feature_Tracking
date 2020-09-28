@@ -7,7 +7,7 @@ detectorType_list = {"SHITOMASI", "SIFT", "HARRIS", "FAST", "BRISK", "ORB", "AKA
 
 descriptorType_list = {"BRISK", "FREAK", "BRIEF", "AKAZE", "SIFT", "ORB"}
 
-### MP.1 Ring Buffer
+### MP.1 Data Buffer Optimization
 This is achieved by removing element in the beginning and pushing a new element. Code below:
 
                     if(dataBuffer.size()>=2)
@@ -18,6 +18,8 @@ This is achieved by removing element in the beginning and pushing a new element.
 
 ### MP.2 Keypoint Detection
 Implement different detectors.
+
+Code in main function:
 
                     if (detectorType.compare("SHITOMASI") == 0)
                     {
@@ -32,6 +34,37 @@ Implement different detectors.
                         detKeypointsModern(keypoints, imgGray, detectorType, false);
                     }
 
+Code in matching2D_student.cpp:
+
+    if (detectorType.compare("FAST") == 0) {
+        auto fast = cv::FastFeatureDetector::create();
+        // double t = (double)cv::getTickCount();
+        fast->detect(img, keypoints);
+    }
+    else if (detectorType.compare("BRISK") == 0) {
+        auto brisk = cv::BRISK::create();
+        // double t = (double)cv::getTickCount();
+        brisk->detect(img, keypoints);
+    }
+    else if (detectorType.compare("ORB") == 0) {
+        auto orb = cv::ORB::create();
+        // double t = (double)cv::getTickCount();
+        orb->detect(img, keypoints);
+    }
+    else if (detectorType.compare("AKAZE") == 0) {
+        auto akaze = cv::AKAZE::create();
+        // double t = (double)cv::getTickCount();
+        akaze->detect(img, keypoints);
+    }
+    else if (detectorType.compare("SIFT") == 0) {
+        auto sift = cv::xfeatures2d::SIFT::create();
+        sift->detect(img, keypoints);
+    }
+    else {
+        // Specified detectorType is unsupported
+        throw invalid_argument(detectorType + " is not a valid detectorType");
+    }
+
 ### MP.3 Keypoint Removal
 Remove keypoints outside of a pre-defined rectangle.
 
@@ -44,17 +77,119 @@ Remove keypoints outside of a pre-defined rectangle.
                         keypoints = filteredKeypoints;
                     }
 
-### MP.2 Keypoint Detection
+### MP.4 Keypoint Descriptor
+Implement descriptors in matching2D_student.cpp:
 
-### MP.2 Keypoint Detection
+    cv::Ptr<cv::DescriptorExtractor> extractor;
+    if (descriptorType.compare("BRISK") == 0)
+    {
 
-### MP.2 Keypoint Detection
+        int threshold = 30;        // FAST/AGAST detection threshold score.
+        int octaves = 3;           // detection octaves (use 0 to do single scale)
+        float patternScale = 1.0f; // apply this scale to the pattern used for sampling the neighbourhood of a keypoint.
 
-### MP.2 Keypoint Detection
+        extractor = cv::BRISK::create(threshold, octaves, patternScale);
+    }
+    else if (descriptorType.compare("BRIEF") == 0)
+    {
+        extractor = cv::xfeatures2d::BriefDescriptorExtractor::create();
+    }
+    else if (descriptorType.compare("ORB") == 0)
+    {
+        extractor = cv::ORB::create();
+    }
+    else if (descriptorType.compare("FREAK") == 0)
+    {
+        extractor = cv::xfeatures2d::FREAK::create();
+    }
+    else if (descriptorType.compare("AKAZE") == 0)
+    {
+        extractor = cv::AKAZE::create();
+    }
+    else if (descriptorType.compare("SIFT") == 0)
+    {
+        extractor = cv::xfeatures2d::SIFT::create();
+    }
+    else
+    {
+        throw invalid_argument(descriptorType + " is not a valid descriptorType");
+    }
 
-### MP.2 Keypoint Detection
 
-### MP.2 Keypoint Detection
+### MP.5 Descriptor Matching & MP.6 Descriptor Distance Ratio
+Implement FLANN matching:
+
+    else if (matcherType.compare("MAT_FLANN") == 0)
+    {
+        if (descriptorType.compare("DES_HOG") == 0)
+        {
+            matcher = cv::FlannBasedMatcher::create();
+        }
+
+        // with all other binary descriptorTypes
+        else if (descriptorType.compare("DES_BINARY") == 0)
+        {
+            const cv::Ptr<cv::flann::IndexParams>& indexParams = cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2);
+            matcher = cv::makePtr<cv::FlannBasedMatcher>(indexParams);
+        }
+
+        else {
+            throw invalid_argument(descriptorType + " is not a valid descriptorCategory");
+        }
+
+Implement KNN selection (with distance ratio test):
+
+    else if (selectorType.compare("SEL_KNN") == 0)
+    { // k nearest neighbors (k=2)
+
+        int k = 2;
+        vector<vector<cv::DMatch>> knn_matches;
+        matcher->knnMatch(descSource, descRef, knn_matches, k);
+        
+        // Filter matches using descriptor distance ratio test
+        double minDescDistRatio = 0.8;
+        for (auto it : knn_matches) {
+            // The returned knn_matches vector contains some nested vectors with size < 2 !?
+            if ( 2 == it.size() && (it[0].distance < minDescDistRatio * it[1].distance) ) {
+                matches.push_back(it[0]);
+            }
+        }
+    }
+
+
+
+### MP.7 Performance evaluation: number of keypoints
+In the Task7_Nkeypoint.csv, I summarized the number of keypoints for different detector for each image. Among all the detectors, the FAST has the best performance, and it gives constantly ~400 keypoints for each image. 
+
+### MP.8 & 9 Performance evaluation
+I looped through the following detectors and descriptors:
+
+    std::vector<std::string> detectorType_list = {"SHITOMASI", "SIFT", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE"};
+    std::vector<std::string> descriptorType_list = {"BRISK", "FREAK", "BRIEF", "AKAZE", "SIFT", "ORB"};
+    
+    for (int detIndex = 0; detIndex < detectorType_list.size(); detIndex++){
+        for (int dscpIndex = 0; dscpIndex < descriptorType_list.size(); dscpIndex++){
+            string detectorType = detectorType_list[detIndex];
+            string descriptorType = descriptorType_list[dscpIndex]; // BRIEF, ORB, FREAK, AKAZE, SIFT
+            if (((detectorType == "AKAZE") || (descriptorType == "AKAZE")) && (detectorType != descriptorType))
+                continue;
+            else if ((detectorType == "SIFT") && (descriptorType == "ORB"))
+                continue;
+            else
+            {
+                ...
+
+
+Note 1: AKAZE detector only works with AKAZE descriptor
+Note 2: SIFT detector does not work with ORB descriptor
+
+In the Task89_match.csv, I summarized the following metrics for each combination of detector and descriptor: number of keypoints, number of matched points, time of detector, time of descriptor.
+
+Based on the data, I recommend top3 detector-descriptor combinations:
+FAST-BRIEF
+FAST-ORB
+FAST-BRISK
+
 
 
 
