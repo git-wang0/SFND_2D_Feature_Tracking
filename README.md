@@ -181,13 +181,17 @@ I looped through the following detectors and descriptors:
 
 
 Note 1: AKAZE detector only works with AKAZE descriptor
+
 Note 2: SIFT detector does not work with ORB descriptor
 
 In the Task89_match.csv, I summarized the following metrics for each combination of detector and descriptor: number of keypoints, number of matched points, time of detector, time of descriptor.
 
 Based on the data, I recommend top3 detector-descriptor combinations:
+
 FAST-BRIEF
+
 FAST-ORB
+
 FAST-BRISK
 
 
